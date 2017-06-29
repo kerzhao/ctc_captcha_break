@@ -171,7 +171,7 @@ def captcha_generator(width,
     noises = [['line', 'point', 'sin']]
     rotates = [True, True]
     nb_chas = [4, 6]
-    font_dir = '/home/ubuntu/gtest/captcha_break/fonts/english'
+    font_dir = 'fonts/english'
     font_paths = []
     for dirpath, dirnames, filenames in os.walk(font_dir):
         for filename in filenames:
@@ -220,7 +220,7 @@ def ctc_captcha_generator(width,
     noises = [['line', 'point', 'sin']]
     rotates = [True, True]
     nb_chas = [4, 6]
-    font_dir = '/home/ubuntu/gtest/captcha_break/fonts/english'
+    font_dir = 'fonts/english'
     font_paths = []
     for dirpath, dirnames, filenames in os.walk(font_dir):
         for filename in filenames:
