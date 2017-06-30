@@ -1,0 +1,129 @@
+# encoding:UTF-8
+
+import time
+print 'author: zhaoke'
+print time.ctime()
+
+# 导入库
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+from keras.optimizers import *
+from keras.models import *
+from keras.layers import *
+from keras import callbacks
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation
+
+from distkeras.trainers import *
+from distkeras.predictors import *
+from distkeras.transformers import *
+from distkeras.evaluators import *
+from distkeras.utils import *
+import distkeras.utils
+from distkeras.job_deployment import Job
+
+from keras import backend as K
+
+# 定义CTC损失函数
+def ctc_lambda_func(args):
+    y_pred, labels, input_length, label_length = args
+    y_pred = y_pred[:, 2:, :]
+    return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
+
+# 建立SparkContext
+
+application_name = "profile test"
+master = 'yarn'
+deploymode = 'client'
+num_executors = 1
+num_cores = 1
+    
+chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghijlmnqrtuwxy"
+width, height, n_len, n_class = 140, 44, 6, len(chars)  
+
+conf = SparkConf()
+conf.set("spark.app.name", application_name)
+conf.set("spark.master", master)
+conf.set("spark.submit.deployMode", deploymode)
+conf.set("spark.executor.cores", `num_cores`)
+conf.set("spark.executor.instances", `num_executors`)
+conf.set("spark.sql.warehouse.dir", "hdfs://master:9000/user/hive/warehouse");
+
+###############################################################################
+#from pyspark.sql import SparkSession
+#sc = SparkSession.builder.master(master).appName(application_name).enableHiveSupport().getOrCreate()
+#sqlContext = SQLContext(sc)
+################################################################################
+from pyspark.sql import HiveContext
+sc = SparkContext(conf=conf)
+sqlContext = HiveContext(sc)
+################################################################################
+
+# 定义CTC模型，构造训练器
+
+
+rnn_size = 128
+
+input_tensor = Input((width, height, 3))
+x = input_tensor
+for i in range(3):
+    x = Conv2D(32*2**i, (3, 3), padding='same', activation='relu')(x)
+    x = Conv2D(32*2**i, (3, 3), activation='relu')(x)
+    x = MaxPooling2D((2, 2))(x)
+
+conv_shape = x.get_shape()
+x = Reshape(target_shape=(int(conv_shape[1]), int(conv_shape[2]*conv_shape[3])))(x)
+
+x = Dense(32, activation='relu')(x)
+
+gru_1 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru1')(x)
+gru_1b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru1_b')(x)
+gru1_merged = merge([gru_1, gru_1b], mode='sum')
+
+gru_2 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru2')(gru1_merged)
+gru_2b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru2_b')(gru1_merged)
+x = merge([gru_2, gru_2b], mode='concat')
+x = Dropout(0.25)(x)
+x = Dense(n_class, init='he_normal', activation='softmax')(x)
+base_model = Model(input=input_tensor, output=x)
+
+labels = Input(name='the_labels', shape=[n_len], dtype='float32')
+input_length = Input(name='input_length', shape=[1], dtype='int64')
+label_length = Input(name='label_length', shape=[1], dtype='int64')
+loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')([x, labels, input_length, label_length])
+
+model = Model(input=[input_tensor, labels, input_length, label_length], output=[loss_out])
+
+model.save('/home/ubuntu/models/rawmodel.h5')
+
+from distkeras.job_deployment import graph
+graph.append(tf.get_default_graph())
+
+trainer = AEASGD(keras_model=model, worker_optimizer=optimizer, loss=loss, num_workers=num_workers, 
+                 batch_size=32, features_col="features_normalized", label_col="newlabel", num_epoch=1,
+                 communication_window=32, rho=5.0, learning_rate=0.1, master_port=master_port)
+
+# 建立调度任务
+job = Job("3Q20LA3MXU3N8Y9NVJ7A1T5WNHL2IWQSNNJ5V9I5P7MRJ8LSC33EN2DT3EWYLCJA",
+          "user1",
+          "data_path",
+          1,
+          1,
+          trainer,
+          1000,
+          10)
+
+# 启动任务
+job.send_with_files('http://52.78.182.174:%d'%send_port, ['generator.py'])
+
+# 等待结束
+job.wait_completion()
+
+# 保存模型
+trained_model = job.get_trained_model()
+trained_model.save('ctc_trained_model.h5')
+
+# 关闭sc
+sc.stop()
