@@ -46,6 +46,14 @@ num_cores = 1
 num_workers = num_executors * num_cores
 optimizer = 'adagrad'
 loss = 'categorical_crossentropy'
+
+addition = 0
+master_port = 5000
+send_port = 8000
+master_port += addition
+send_port += addition
+print master_port
+print send_port
     
 chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghijlmnqrtuwxy"
 width, height, n_len, n_class = 140, 44, 6, len(chars)  
