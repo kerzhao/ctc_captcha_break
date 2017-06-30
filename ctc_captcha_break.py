@@ -24,6 +24,10 @@ from distkeras.utils import *
 import distkeras.utils
 from distkeras.job_deployment import Job
 
+from pyspark import SparkConf
+from pyspark import SparkContext
+from pyspark.sql import SQLContext
+
 from keras import backend as K
 
 # 定义CTC损失函数
