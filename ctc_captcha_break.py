@@ -43,6 +43,8 @@ master = 'yarn'
 deploymode = 'client'
 num_executors = 1
 num_cores = 1
+optimizer = 'adagrad'
+loss = 'categorical_crossentropy'
     
 chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghijlmnqrtuwxy"
 width, height, n_len, n_class = 140, 44, 6, len(chars)  
