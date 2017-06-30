@@ -60,9 +60,7 @@ conf.set("spark.sql.warehouse.dir", "hdfs://master:9000/user/hive/warehouse");
 #sc = SparkSession.builder.master(master).appName(application_name).enableHiveSupport().getOrCreate()
 #sqlContext = SQLContext(sc)
 ################################################################################
-from pyspark.sql import HiveContext
 sc = SparkContext(conf=conf)
-sqlContext = HiveContext(sc)
 ################################################################################
 
 # 定义CTC模型，构造训练器
