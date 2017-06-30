@@ -38,7 +38,7 @@ def ctc_lambda_func(args):
 
 # 建立SparkContext
 
-application_name = "ctc captcha break test"
+application_name = "ctc captcha break"
 master = 'yarn'
 deploymode = 'client'
 num_executors = 1
@@ -93,13 +93,11 @@ x = Dense(32, activation='relu')(x)
 
 gru_1 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru1')(x)
 gru_1b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru1_b')(x)
-#gru1_merged = merge([gru_1, gru_1b], mode='sum')  #-----08/2017后弃用该命令
-gru1_merged = merge.add([gru_1, gru_1b])
+gru1_merged = merge([gru_1, gru_1b], mode='sum')  #-----08/2017后弃用该命令
 
 gru_2 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru2')(gru1_merged)
 gru_2b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru2_b')(gru1_merged)
-#x = merge([gru_2, gru_2b], mode='concat')  #-----08/2017后弃用该命令
-x = merge.concatenate([gru_2, gru_2b])
+x = merge([gru_2, gru_2b], mode='concat')  #-----08/2017后弃用该命令
 x = Dropout(0.25)(x)
 x = Dense(n_class, init='he_normal', activation='softmax')(x)
 base_model = Model(input=input_tensor, output=x)  
