@@ -93,14 +93,14 @@ x = Dense(32, activation='relu')(x)
 
 gru_1 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru1')(x)
 gru_1b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru1_b')(x)
-gru1_merged = merge([gru_1, gru_1b], mode='sum')  #-----08/2017后弃用该命令
+gru1_merged = merge([gru_1, gru_1b], mode='sum')
 
 gru_2 = GRU(rnn_size, return_sequences=True, init='he_normal', name='gru2')(gru1_merged)
 gru_2b = GRU(rnn_size, return_sequences=True, go_backwards=True, init='he_normal', name='gru2_b')(gru1_merged)
-x = merge([gru_2, gru_2b], mode='concat')  #-----08/2017后弃用该命令
+x = merge([gru_2, gru_2b], mode='concat')
 x = Dropout(0.25)(x)
 x = Dense(n_class, init='he_normal', activation='softmax')(x)
-base_model = Model(input=input_tensor, output=x)  
+base_model = Model(input=input_tensor, output=x)
 
 labels = Input(name='the_labels', shape=[n_len], dtype='float32')
 input_length = Input(name='input_length', shape=[1], dtype='int64')
