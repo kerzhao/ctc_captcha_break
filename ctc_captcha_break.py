@@ -43,6 +43,7 @@ master = 'yarn'
 deploymode = 'client'
 num_executors = 1
 num_cores = 1
+num_workers = num_executors * num_cores
 optimizer = 'adagrad'
 loss = 'categorical_crossentropy'
     
