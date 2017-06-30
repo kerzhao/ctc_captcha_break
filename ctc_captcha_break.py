@@ -29,6 +29,7 @@ from pyspark import SparkContext
 from pyspark.sql import SQLContext
 
 from keras import backend as K
+import tensorflow as tf
 
 # 定义CTC损失函数
 def ctc_lambda_func(args):
@@ -108,6 +109,8 @@ label_length = Input(name='label_length', shape=[1], dtype='int64')
 loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')([x, labels, input_length, label_length])
 
 model = Model(input=[input_tensor, labels, input_length, label_length], output=[loss_out])
+
+model.summary()
 
 model.save('/home/ubuntu/models/rawmodel.h5')
 
