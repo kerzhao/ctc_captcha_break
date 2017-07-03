@@ -160,7 +160,8 @@ def captcha_draw(size_im, nb_cha, set_cha, fonts=None, overlap=0.1,
 def captcha_generator(width, 
                       height, 
                       batch_size=64,
-                      set_cha=chars
+                      set_cha=chars,
+                      font_dir='/home/ubuntu/fonts/english'
                       ):
     size_im = (width, height)
     overlaps = [0.0, 0.3, 0.6]
@@ -171,7 +172,6 @@ def captcha_generator(width,
     noises = [['line', 'point', 'sin']]
     rotates = [True, True]
     nb_chas = [4, 6]
-    font_dir = 'fonts/english'
     font_paths = []
     for dirpath, dirnames, filenames in os.walk(font_dir):
         for filename in filenames:
@@ -209,7 +209,8 @@ def ctc_captcha_generator(width,
                   height,
                   conv_shape,
                   batch_size=64,
-                  set_cha=chars
+                  set_cha=chars,
+                  font_dir='/home/ubuntu/fonts/english'
                   ):
     size_im = (width, height)
     overlaps = [0.0, 0.3, 0.6]
@@ -220,7 +221,6 @@ def ctc_captcha_generator(width,
     noises = [['line', 'point', 'sin']]
     rotates = [True, True]
     nb_chas = [4, 6]
-    font_dir = 'fonts/english'
     font_paths = []
     for dirpath, dirnames, filenames in os.walk(font_dir):
         for filename in filenames:
@@ -230,7 +230,7 @@ def ctc_captcha_generator(width,
     n_len = 6
     n_class = len(set_cha)
     X = np.zeros((batch_size, width, height, 3), dtype=np.uint8)
-    y = [np.zeros((batch_size, n_class), dtype=np.uint8) for i in range(n_len)]    
+    y = np.zeros((batch_size, n_len), dtype=np.uint8)
     while True:
         for i in range(batch_size):
             overlap = random.choice(overlaps)
@@ -249,9 +249,7 @@ def ctc_captcha_generator(width,
                                         rotate=rotate, dir_path=dir_path, fonts=font_path)
             contents = ''.join(contents)
             X[i] = im.transpose(1, 0, 2)
-            for j, ch in enumerate(contents):
-                y[j][i, :] = 0
-                y[j][i, set_cha.find(ch)] = 1
+            y[i] = [chars.find(x) for x in contents]
         yield [X, y, np.ones(batch_size)*conv_shape, np.ones(batch_size)*n_len], np.ones(batch_size)
         
 #----------------------------------------------------------------------
