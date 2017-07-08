@@ -53,7 +53,7 @@ print master_port
 print send_port
     
 chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabdefghijlmnqrtuwxy"
-width, height, n_len, n_class = 140, 44, 6, len(chars)  
+width, height, n_len, n_class = 140, 44, 6, len(chars)+1
 
 conf = SparkConf()
 conf.set("spark.app.name", application_name)
